@@ -7,77 +7,71 @@ async function getActiveTabId() {
   return tab.id;
 }
 
-async function rebalance() {
-  const tabId = await getActiveTabId();
-  chrome.storage.local.set({ tabId });
+async function toggleRebalance() {
+  const { toggle } = await chrome.storage.sync.get("toggle");
+  chrome.storage.sync.set({ toggle: !toggle });
+}
 
-  chrome.scripting.executeScript({
-    target: { tabId },
-    files: ["js/rebalancer.js"],
-  }, res => {
-    const e = chrome.runtime.lastError;
-    if (e !== undefined) {
-      console.log(tabId, res, e);
-    }
-  });
+async function rebalance() {
+  try {
+    const tabId = await getActiveTabId();
+    chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["js/rebalancer.js"],
+    });
+  } catch (e) {
+    console.error(tabId, e);
+  }
 }
 
 async function unbalance() {
-  const tabId = await getActiveTabId();
-  chrome.storage.local.set({ tabId });
-
-  chrome.scripting.executeScript({
-    target: { tabId },
-    files: ["js/unbalancer.js"],
-  }, res => {
-    const e = chrome.runtime.lastError;
-    if (e !== undefined) {
-      console.log(tabId, res, e);
-    }
-  });
+  try {
+    const tabId = await getActiveTabId();
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["js/unbalancer.js"],
+    });
+  } catch (e) {
+    console.error(tabId, e);
+  }
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.sync.set({ replacementKey: "replacementThroatInflammation" }); // TODO
-
   const toggle = true;
-  chrome.storage.local.set({ toggle });
+  chrome.storage.sync.set({ toggle });
+
+  chrome.action.onClicked.addListener(async () => {
+    await toggleRebalance();
+  });
+
+  chrome.commands.onCommand.addListener(async (command) => {
+    if (command === "toggle") {
+      await toggleRebalance();
+    }
+  });
 
   chrome.contextMenus.create({
     id: "rebalance",
-    title: "Rebalance universe",
+    title: chrome.i18n.getMessage("toggle"),
     contexts: ["all"],
     type: "checkbox",
     checked: toggle,
   });
-  chrome.contextMenus.onClicked.addListener(info => {
-    chrome.storage.local.set({ toggle: info.checked });
+  chrome.contextMenus.onClicked.addListener(({ checked }) => {
+    chrome.storage.sync.set({ toggle: checked });
   });
 
-  // `getMessage` currently not supported in service workers
-  chrome.runtime.onMessage.addListener(request => {
-    chrome.contextMenus.update("rebalance", { title: request.title });
-  });
+  chrome.storage.onChanged.addListener(async (changes) => {
+    const { toggle } = changes;
 
-  chrome.commands.onCommand.addListener(command => {
-    if (command === "toggleRebalance") {
-      chrome.storage.local.get("toggle", ({ toggle }) => {
-        chrome.storage.local.set({ toggle: !toggle });
-      });
-    }
-  });
-
-  chrome.storage.onChanged.addListener(async changes => {
-    const { toggle, rebalanceToggle } = changes;
-
-    if (toggle !== undefined && toggle?.oldValue !== toggle?.newValue) {
-      if (toggle?.newValue) {
+    if (toggle != null && toggle.oldValue !== toggle.newValue) {
+      if (toggle.newValue) {
         await rebalance();
 
         chrome.action.setIcon({
           path: {
-            "16": "img/icon16.png",
-            "32": "img/icon32.png",
+            16: "img/icon16.png",
+            32: "img/icon32.png",
           },
         });
       } else {
@@ -85,31 +79,22 @@ chrome.runtime.onInstalled.addListener(() => {
 
         chrome.action.setIcon({
           path: {
-            "16": "img/icon_disabled16.png",
-            "32": "img/icon_disabled32.png",
+            16: "img/icon_disabled16.png",
+            32: "img/icon_disabled32.png",
           },
         });
       }
-    }
 
-    // TODO: two-way binding
-    if (rebalanceToggle !== undefined && rebalanceToggle?.oldValue !== rebalanceToggle?.newValue) {
-      chrome.storage.local.set({ toggle: rebalanceToggle?.newValue });
-      chrome.contextMenus.update("rebalance", { checked: rebalanceToggle?.newValue });
+      chrome.contextMenus.update("rebalance", { checked: toggle.newValue });
     }
   });
 
-  chrome.tabs.onUpdated.addListener(async () => {
-    const tabId = await getActiveTabId();
-    chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["js/localizeContextMenu.js"],
-    });
-
-    chrome.storage.local.get("toggle", async ({ toggle }) => {
-      if (toggle) {
-        await rebalance();
-      }
-    });
-  })
+  const maybeRebalance = async () => {
+    const { toggle } = await chrome.storage.sync.get("toggle");
+    if (toggle) {
+      await rebalance();
+    }
+  };
+  chrome.tabs.onCreated.addListener(maybeRebalance);
+  chrome.tabs.onUpdated.addListener(maybeRebalance);
 });

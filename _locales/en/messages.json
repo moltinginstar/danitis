@@ -3,27 +3,18 @@
     "message": "Danitis"
   },
   "description": {
-    "message": "Replace “Danish” with “throat inflammation” across the web and restore balance to the universe!"
-  },
-  "contextMenu": {
-    "message": "Rebalance universe"
+    "message": "Replace “Danish” with “Danitis” across the web and restore balance to the universe!"
   },
   "tooltip": {
-    "message": "Restore balance to the universe (Alt+Shift+R)."
+    "message": "Restore balance to the universe (Alt+Shift+R)"
   },
-  "toggleRebalance": {
+  "toggle": {
     "message": "Toggle rebalancing"
   },
-  "greeting": {
-    "message": "Fugg yøu, Danish."
+  "stringToReplace": {
+    "message": "Danish"
   },
-  "replacementThroatInflammation": {
-    "message": "throat inflammation"
-  },
-  "replacementHiccup": {
-    "message": "hiccup"
-  },
-  "replacementDanitis": {
-    "message": "danitis"
+  "replacementString": {
+    "message": "Danitis"
   }
 }
