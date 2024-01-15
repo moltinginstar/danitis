@@ -1,5 +1,7 @@
 # Danitis
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 Are you a [Swede](https://satwcomic.com/fanart/6087/ein-throat-infection)? Do you suffer from Danish-related discomfort while browsing the web? Fear not, for Danitis is here to save the day! This Chrome extension transforms the web by replacing the word “Danish” with the far more appropriate “Dan[itis](https://en.wiktionary.org/wiki/-itis#English),” restoring your peace of mind and making the world a better place.
 
 ## Installation
